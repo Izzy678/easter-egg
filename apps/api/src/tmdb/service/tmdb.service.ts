@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 
@@ -8,16 +8,9 @@ export class TmdbService {
   private readonly apiKey: string;
   private readonly baseUrl = 'https://api.themoviedb.org/3';
 
-  private readonly TMDB_IMAGE_BASE = "https://image.tmdb.org/t/p/";
-  private readonly TMDB_IMAGE_SIZE_POSTER_HIGH_QUALITY = "w500";
-  private readonly TMDB_IMAGE_SIZE_BACKDROP_LARGE = "w1280";
-  private readonly TMDB_IMAGE_SIZE_BACKDROP_ORIGINAL = "original";
 
   constructor(private configService: ConfigService) {
     this.apiKey = this.configService.get<string>('TMDB_API_KEY', '');
-    if (!this.apiKey) {
-      this.logger.warn('TMDB_API_KEY not set. TMDb integration will not work.');
-    }
   }
 
   async getfullMovieDetail(movieId: number) {
@@ -31,7 +24,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error(`Error fetching movie ${movieId} from TMDb:`, error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch movie detail');
     }
   }
 
@@ -46,7 +39,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error(`Error fetching movie reviews for movie ${movieId} from TMDb:`, error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch movie reviews');
     }
   }
 
@@ -61,7 +54,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error(`Error fetching movie ${movieId} from TMDb:`, error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch movie recommendations');
     }
   }
 
@@ -76,7 +69,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching popular movies from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch popular movies');
     }
   }
 
@@ -91,7 +84,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching top rated movies from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch top rated movies');
     }
   }
 
@@ -106,7 +99,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching now playing in theaters movies from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch now playing in theaters movies');
     }
   }
 
@@ -121,7 +114,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching upcoming movies from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch upcoming movies');
     }
   }
 
@@ -136,7 +129,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching trending movies from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch trending movies');
     }
   }
 
@@ -151,7 +144,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error searching TMDb multi:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to search TMDb multi');
     }
   }
 
@@ -166,7 +159,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching trending all from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch trending all');
     }
   }
 
@@ -181,7 +174,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching trending TV from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch trending TV');
     }
   }
 
@@ -196,7 +189,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching TV on the air from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch TV on the air');
     }
   }
 
@@ -211,7 +204,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error('Error fetching popular TV from TMDb:', error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch popular TV');
     }
   }
 
@@ -226,7 +219,7 @@ export class TmdbService {
       return response.data;
     } catch (error) {
       this.logger.error(`Error fetching TV ${id} from TMDb:`, error);
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch TV detail');
     }
   }
 
@@ -244,7 +237,7 @@ export class TmdbService {
         `Error fetching TV ${seriesId} season ${seasonNumber} from TMDb:`,
         error
       );
-      throw error;
+      throw new InternalServerErrorException('Failed to fetch TV season detail');
     }
   }
 }
