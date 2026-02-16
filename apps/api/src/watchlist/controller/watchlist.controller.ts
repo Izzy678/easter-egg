@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
-import { WatchlistService } from './watchlist.service';
-import { ItemType } from './entities/watchlist.entity';
+import { WatchlistService } from '../service/watchlist.service';
+import { ItemType } from '../entities/watchlist.entity';
 
 
 @Controller('watchlist')
@@ -12,10 +12,10 @@ export class WatchlistController {
     return this.watchlistService.create(createWatchlistDto);
   }
 
-  @Get()
-  findAll(@Query('userId') userId: string, @Query('watched') watched?: string) {
-    return this.watchlistService.findAll(userId, watched === 'true');
-  }
+  // @Get()
+  // findAll(@Query('userId') userId: string, @Query('watched') watched?: string) {
+  //   return this.watchlistService.findAll(userId, watched === 'true');
+  // }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateWatchlistDto: { watched: boolean }) {
