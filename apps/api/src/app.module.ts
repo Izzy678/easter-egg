@@ -1,12 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { MoviesModule } from './movies/movies.module';
-import { SeriesModule } from './series/series.module';
 import { MoodsModule } from './moods/moods.module';
-import { RecapsModule } from './recaps/recaps.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
 import { TmdbModule } from './tmdb/tmdb.module';
 import { LlmModule } from './llm/llm.module';
@@ -41,16 +37,12 @@ import { CacheModule } from './cache/cache.module';
       inject: [ConfigService],
     }),
     MoviesModule,
-    SeriesModule,
     MoodsModule,
-    RecapsModule,
     WatchlistModule,
     TmdbModule,
     LlmModule,
     CacheModule,
     RecapModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}
