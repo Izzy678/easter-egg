@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { TmdbService } from '../../tmdb/service/tmdb.service';
 
 import type { MovieRecapContext } from '../prompt/recap.prompt.builder';
 import type { SeriesEpisodeContext, SeriesRecapContext } from '../prompt/recap.prompt.builder';
-import { CanonFetcherService } from 'src/canon/canon-fetcher.service';
 
 interface TmdbMovieDetail {
   title?: string;
@@ -29,7 +28,6 @@ interface TmdbSeasonDetail {
 export class RecapDataBuilder {
   constructor(
     private readonly tmdbService: TmdbService,
-    private readonly canonFetcher: CanonFetcherService,
   ) {}
 
   async buildMovieContext(movieId: number): Promise<MovieRecapContext> {
@@ -47,23 +45,8 @@ export class RecapDataBuilder {
       if (this.isNotFoundError(err)) {
         throw new NotFoundException(`Movie ${movieId} not found`);
       }
-      throw err;
+      throw new InternalServerErrorException('An unexpected error occurred. Please try again later.');
     }
-  }
-
-  /** Enriched context: TMDB + optional canon (Fandom). Canon is merged when fetcher is available. */
-  async buildMovieContextEnriched(movieId: number): Promise<MovieRecapContext> {
-    const context = await this.buildMovieContext(movieId);
-    try {
-      const canonSummary = await this.canonFetcher.getMovieCanonSummary(
-        movieId,
-        context.title,
-      );
-      if (canonSummary) context.canonSummary = canonSummary;
-    } catch {
-      // fallback to TMDB-only context
-    }
-    return context;
   }
 
   private isNotFoundError(err: unknown): boolean {
@@ -119,35 +102,8 @@ export class RecapDataBuilder {
           `Series ${seriesId} or season ${season} not found`
         );
       }
-      throw err;
+      throw new InternalServerErrorException('An unexpected error occurred. Please try again later.');
     }
-  }
-
-  /** Enriched context: TMDB + optional canon (Fandom). Canon is merged when fetcher is available. */
-  async buildSeriesContextEnriched(
-    seriesId: number,
-    season: number,
-    episodeFrom: number,
-    episodeTo: number,
-  ): Promise<SeriesRecapContext> {
-    const context = await this.buildSeriesContext(
-      seriesId,
-      season,
-      episodeFrom,
-      episodeTo,
-    );
-    try {
-      const canonSummary = await this.canonFetcher.getSeriesCanonSummary(
-        seriesId,
-        context.seriesName,
-        season,
-        context.episodes.map((e) => ({ episodeNumber: e.episodeNumber, name: e.name })),
-      );
-      if (canonSummary) context.canonSummary = canonSummary;
-    } catch {
-      // fallback to TMDB-only context
-    }
-    return context;
   }
 
   /**

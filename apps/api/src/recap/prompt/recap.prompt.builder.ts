@@ -4,8 +4,6 @@ export interface MovieRecapContext {
   tagline?: string;
   /** If false, instruct the model not to reveal the ending or major twists. */
   includeEnding?: boolean;
-  /** Optional additional context from Fandom/wiki. When present, prompt instructs LLM to use it. */
-  canonSummary?: string;
 }
 
 export interface SeriesEpisodeContext {
@@ -21,8 +19,6 @@ export interface SeriesRecapContext {
   episodeFrom: number;
   episodeTo: number;
   episodes: SeriesEpisodeContext[];
-  /** Optional additional context from Fandom/wiki. When present, prompt instructs LLM to use it. */
-  canonSummary?: string;
 }
 
 export function buildMoviePrompt(ctx: MovieRecapContext): string {
@@ -66,13 +62,12 @@ Use this structure with markdown headings and formatting:
 - ${spoilerInstruction}
 - Total length: aim for a detailed but concise recap (approximately 400–800 words). Do not write a 15,000-word script.
 - Align tone with a conversational, analytical style that feels like a thoughtful video recap.
-${ctx.canonSummary ? '\n- Use the "Additional canon" section below as authoritative context to enrich the recap. Do not invent events beyond what is in the provided plot and canon.' : ''}
 
 ---
 
 Title: ${ctx.title}
 ${taglineBlock}Plot: ${ctx.overview}
-${ctx.canonSummary ? `\n\nAdditional canon (Fandom/wiki):\n${ctx.canonSummary}` : ''}
+
 
 Now write the recap using the structure above.`;
 }
@@ -129,14 +124,10 @@ export function buildMovieQuickPrompt(ctx: MovieRecapContext): string {
     ctx.includeEnding === false
       ? 'Do not reveal the ending or major twists.'
       : 'You may include key revelations.';
-  const canonNote = ctx.canonSummary
-    ? ' Use the "Additional canon" section below to add detail. Do not invent events.'
-    : '';
-  return `You are a professional movie recap writer. Provide a quick catch-up in exactly 5 to 7 bullet points. Use the provided plot${canonNote}. Keep the tone engaging and concise. ${spoilerLine}
+  return `You are a professional movie recap writer. Provide a quick catch-up in exactly 5 to 7 bullet points. Use the provided plot. Keep the tone engaging and concise. ${spoilerLine}
 
 Title: ${ctx.title}
 Plot: ${ctx.overview}
-${ctx.canonSummary ? `\n\nAdditional canon (Fandom/wiki):\n${ctx.canonSummary}` : ''}
 
 Bullet points (one per line, start each with "-"):`;
 }
@@ -191,7 +182,6 @@ Recap:
 - Focus on plot relevance and avoid minor details that do not impact the main stories.
 - Use neutral and clear language suitable for a general audience.
 - Do NOT invent events or characters. Use only the episode information provided below.
-${ctx.canonSummary ? '\n- Use the "Additional canon" section below as authoritative context to enrich the recap.' : ''}
 
 ---
 
@@ -201,7 +191,6 @@ Episode range: ${rangeDesc}
 
 Episode summaries:
 ${episodesText}
-${ctx.canonSummary ? `\n\nAdditional canon (Fandom/wiki):\n${ctx.canonSummary}` : ''}
 
 Now write the recap following the format above.`;
 }

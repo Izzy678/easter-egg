@@ -29,7 +29,6 @@ export class RecapController {
     @Query('season', ParseIntPipe) season: number,
     @Query('episodeFrom', ParseIntPipe) episodeFrom: number,
     @Query('episodeTo', ParseIntPipe) episodeTo: number,
-    @Query('useEnrichedContext') useEnrichedContext?: string,
   ): Promise<RecapResponseDto> {
     if (season < 1 || episodeFrom < 1 || episodeTo < 1) {
       throw new BadRequestException(
@@ -39,13 +38,11 @@ export class RecapController {
     if (episodeFrom > episodeTo) {
       throw new BadRequestException('episodeFrom must be less than or equal to episodeTo');
     }
-    const useEnriched = useEnrichedContext === 'true';
     return this.recapService.generateSeriesRecap(
       seriesId,
       season,
       episodeFrom,
       episodeTo,
-      useEnriched,
     );
   }
 }

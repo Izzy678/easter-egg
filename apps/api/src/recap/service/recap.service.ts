@@ -9,7 +9,6 @@ import {
 } from '../prompt/recap.prompt.builder';
 import type { MovieRecapOptionsDto } from '../dto/recap.dto';
 import type { RecapResponseDto } from '../dto/recap.dto';
-import fs from 'fs';
 
 const LLM_RETRIES = 3;
 
@@ -36,20 +35,17 @@ export class RecapService {
     private readonly llmService: LlmService,
     private readonly cache: CacheService,
     private readonly dataBuilder: RecapDataBuilder,
-  ) {}
+  ) { }
 
   async generateMovieRecap(
     movieId: number,
     options?: MovieRecapOptionsDto,
   ): Promise<RecapResponseDto> {
-    const useEnriched = options?.useEnrichedContext === true;
-    const key = recapCacheKey.movie(movieId, useEnriched);
+    const key = recapCacheKey.movie(movieId);
     const cached = this.cache.get<RecapResponseDto>(key);
     if (cached) return cached;
 
-    const context = useEnriched
-      ? await this.dataBuilder.buildMovieContextEnriched(movieId)
-      : await this.dataBuilder.buildMovieContext(movieId);
+    const context = await this.dataBuilder.buildMovieContext(movieId);
     context.includeEnding = options?.includeEnding ?? true;
     const prompt =
       options?.recapType === 'quick'
@@ -74,26 +70,23 @@ export class RecapService {
     season: number,
     episodeFrom: number,
     episodeTo: number,
-    useEnriched = true,
   ): Promise<RecapResponseDto> {
     const key = recapCacheKey.series(
       seriesId,
       season,
       episodeFrom,
       episodeTo,
-      useEnriched,
     );
     const cached = this.cache.get<RecapResponseDto>(key);
     if (cached) return cached;
 
-    const context = await this.dataBuilder.buildSeriesContextEnriched(
+    const context = await this.dataBuilder.buildSeriesContext(
       seriesId,
       season,
       episodeFrom,
       episodeTo,
     );
     const prompt = buildSeriesPromptStructured(context);
-    console.log('prompt', prompt);
     const content = await this.generateWithRetry(prompt);
 
     const result: RecapResponseDto = {
@@ -108,7 +101,7 @@ export class RecapService {
     let lastError: unknown;
     for (let attempt = 1; attempt <= LLM_RETRIES; attempt++) {
       try {
-        return await this.llmService.generateTextWithGemini(prompt);
+        return await this.llmService.generateText(prompt);
       } catch (err) {
         lastError = err;
         this.logger.warn(
