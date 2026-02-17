@@ -1,137 +1,121 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/movies/Sidebar';
 import { MoviesHeader } from '@/components/movies/MoviesHeader';
 import { DiscussionCard } from '@/components/movies/DiscussionCard';
+import { DiscussionCardSkeleton } from '@/components/movies/DiscussionCardSkeleton';
 import { TrendingSideRail } from '@/components/movies/TrendingSideRail';
+import { formatDistanceToNow } from 'date-fns';
+
+interface ApiPostUser {
+  id: string;
+  name: string | null;
+  username: string | null;
+  image: string | null;
+}
+
+interface ApiPost {
+  id: number;
+  userId: string | null;
+  content: string;
+  itemType: string;
+  itemId: number;
+  itemName: string | null;
+  itemImageUrl: string | null;
+  tags: string[];
+  createdAt: string;
+  user?: ApiPostUser | null;
+  likeCount?: number;
+  commentCount?: number;
+}
+
+/** Response from GET /api/posts: either { posts, page, limit, total, totalPages } or a plain array (legacy). */
+type PostsResponse = { posts?: ApiPost[]; page?: number; limit?: number; total?: number; totalPages?: number } | ApiPost[];
+
+const DEFAULT_AVATAR = '/static/images/people/1.webp';
+
+function mapPostToCard(
+  post: ApiPost,
+  opts: { liked?: boolean; onLike?: () => void }
+) {
+  const firstLine = post.content.split(/\n/)[0]?.trim() || post.content;
+  const topicTitle = firstLine.length > 80 ? `${firstLine.slice(0, 77)}...` : firstLine;
+  const previewText = post.content.length > 200 ? `${post.content.slice(0, 197)}...` : post.content;
+  const timeAgo = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
+
+  const authorName = post.user?.username?.trim() || post.user?.name?.trim() || 'User';
+  const authorAvatar = post.user?.image || DEFAULT_AVATAR;
+
+  return {
+    movieTitle: post.itemName ?? 'Movie',
+    topicTitle,
+    previewText,
+    author: { name: authorName, avatar: authorAvatar },
+    tags: Array.isArray(post.tags) ? post.tags : [],
+    stats: {
+      comments: post.commentCount ?? 0,
+      likes: post.likeCount ?? 0,
+      timeAgo,
+    },
+    poster: post.itemImageUrl ?? undefined,
+    postId: post.id,
+    liked: opts.liked,
+    onLike: opts.onLike,
+  };
+}
 
 export default function MoviesPage() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [posts, setPosts] = useState<ApiPost[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [likedPostIds, setLikedPostIds] = useState<Set<number>>(new Set());
 
-    // Mock data for feed
-    const posts = [
-        {
-            movieTitle: 'Interstellar',
-            topicTitle: 'The Tesseract scene wasn\'t about love, it was about gravity',
-            previewText:
-                'Everyone focuses on the "love transcends dimensions" line, but the actual mechanics of the 5th dimension suggest Cooper was manipulating gravity waves long before he entered the black hole. Here\'s the math behind it...',
-            author: { name: 'CosmicRay', avatar: '/static/images/people/1.webp' },
-            tags: ['Physics', 'Deep Dive'],
-            stats: { comments: 850, likes: 3200, timeAgo: '2h ago' },
-            poster: '/static/images/2.jpg',
-        },
-        {
-            movieTitle: 'Dark (Series)',
-            topicTitle: 'Why Adam and Eve discussion is flawed from the start',
-            previewText:
-                'The loop isn\'t broken by their death, but by the realization of the origin world. The knot is far more complex than a simple dualism. Let\'s map out the family tree one last time to find the true anomaly.',
-            author: { name: 'TimeTravelerZero', avatar: '/static/images/people/1.webp' },
-            tags: ['Series', 'Complex', 'Spoilers'],
-            stats: { comments: 420, likes: 1500, timeAgo: '6h ago' },
-            poster: '/static/images/3.jpg',
-        },
-        {
-            movieTitle: 'The Prestige',
-            topicTitle: 'The real magic trick was the structural narrative',
-            previewText:
-                'Nolan hides the twist in plain sight, not just through dialogue, but through the editing itself. The three distinct acts (Pledge, Turn, Prestige) map perfectly to the three timelines shown.',
-            author: { name: 'CinemaSinsNot', avatar: '/static/images/people/1.webp' },
-            tags: ['Analysis', 'Directing'],
-            stats: { comments: 230, likes: 890, timeAgo: '12h ago' },
-            poster: '/static/images/4.jpg',
-        },
-        {
-            movieTitle: 'Blade Runner 2049',
-            topicTitle: 'K\'s memory was real, just not his own',
-            previewText:
-                'The horse memory is key. It wasn\'t an implant in the traditional sense, but a shared trauma. This fundamentally changes how we view replicant consciousness and the "soul" debate.',
-            author: { name: 'ReplicantHunter', avatar: '/static/images/people/1.webp' },
-            tags: ['Philosophy', 'Character Study'],
-            stats: { comments: 560, likes: 2100, timeAgo: '1d ago' },
-            poster: '/static/images/5.jpg',
-        },
-        {
-            movieTitle: 'Arrival',
-            topicTitle: 'Why the heptapod language rewrites cause and effect',
-            previewText:
-                'Louise doesn\'t just learn the language—she gains a non-linear perception of time. The film\'s structure itself mirrors this: the "flashbacks" are actually her future memories. Here\'s how the script hides the twist.',
-            author: { name: 'LinguistNerd', avatar: '/static/images/people/1.webp' },
-            tags: ['Linguistics', 'Time'],
-            stats: { comments: 410, likes: 1800, timeAgo: '2d ago' },
-            poster: '/static/images/2.jpg',
-        },
-        {
-            movieTitle: 'Parasite',
-            topicTitle: 'The stone and the basement: symbols of impossible mobility',
-            previewText:
-                'The scholar\'s stone keeps floating up; the basement family can never rise. Bong Joon-ho layers class critique through these two motifs. We break down every recurrence and what they mean for the ending.',
-            author: { name: 'ClassCritic', avatar: '/static/images/people/1.webp' },
-            tags: ['Class', 'Symbolism'],
-            stats: { comments: 720, likes: 2900, timeAgo: '3d ago' },
-            poster: '/static/images/3.jpg',
-        },
-        {
-            movieTitle: 'Eternal Sunshine of the Spotless Mind',
-            topicTitle: 'Lacuna\'s tech doesn\'t erase—it rewrites the narrative',
-            previewText:
-                'The procedure doesn\'t just delete memories; it constructs a new story where the person never existed. That\'s why Joel and Clementine keep finding each other—the gap in the narrative creates its own pull.',
-            author: { name: 'MemoryPalace', avatar: '/static/images/people/1.webp' },
-            tags: ['Memory', 'Romance'],
-            stats: { comments: 380, likes: 1650, timeAgo: '4d ago' },
-            poster: '/static/images/4.jpg',
-        },
-        {
-            movieTitle: 'Eternal Sunshine of the Spotless Mind',
-            topicTitle: 'Lacuna\'s tech doesn\'t erase—it rewrites the narrative',
-            previewText:
-                'The procedure doesn\'t just delete memories; it constructs a new story where the person never existed. That\'s why Joel and Clementine keep finding each other—the gap in the narrative creates its own pull.',
-            author: { name: 'MemoryPalace', avatar: '/static/images/people/1.webp' },
-            tags: ['Memory', 'Romance'],
-            stats: { comments: 380, likes: 1650, timeAgo: '4d ago' },
-            poster: '/static/images/4.jpg',
-        },
-        {
-            movieTitle: 'Eternal Sunshine of the Spotless Mind',
-            topicTitle: 'Lacuna\'s tech doesn\'t erase—it rewrites the narrative',
-            previewText:
-                'The procedure doesn\'t just delete memories; it constructs a new story where the person never existed. That\'s why Joel and Clementine keep finding each other—the gap in the narrative creates its own pull.',
-            author: { name: 'MemoryPalace', avatar: '/static/images/people/1.webp' },
-            tags: ['Memory', 'Romance'],
-            stats: { comments: 380, likes: 1650, timeAgo: '4d ago' },
-            poster: '/static/images/4.jpg',
-        },
-        {
-            movieTitle: 'Eternal Sunshine of the Spotless Mind',
-            topicTitle: 'Lacuna\'s tech doesn\'t erase—it rewrites the narrative',
-            previewText:
-                'The procedure doesn\'t just delete memories; it constructs a new story where the person never existed. That\'s why Joel and Clementine keep finding each other—the gap in the narrative creates its own pull.',
-            author: { name: 'MemoryPalace', avatar: '/static/images/people/1.webp' },
-            tags: ['Memory', 'Romance'],
-            stats: { comments: 380, likes: 1650, timeAgo: '4d ago' },
-            poster: '/static/images/4.jpg',
-        },
-        {
-            movieTitle: 'Eternal Sunshine of the Spotless Mind',
-            topicTitle: 'Lacuna\'s tech doesn\'t erase—it rewrites the narrative',
-            previewText:
-                'The procedure doesn\'t just delete memories; it constructs a new story where the person never existed. That\'s why Joel and Clementine keep finding each other—the gap in the narrative creates its own pull.',
-            author: { name: 'MemoryPalace', avatar: '/static/images/people/1.webp' },
-            tags: ['Memory', 'Romance'],
-            stats: { comments: 380, likes: 1650, timeAgo: '4d ago' },
-            poster: '/static/images/4.jpg',
-        },
-        {
-            movieTitle: 'Eternal Sunshine of the Spotless Mind',
-            topicTitle: 'Lacuna\'s tech doesn\'t erase—it rewrites the narrative',
-            previewText:
-                'The procedure doesn\'t just delete memories; it constructs a new story where the person never existed. That\'s why Joel and Clementine keep finding each other—the gap in the narrative creates its own pull.',
-            author: { name: 'MemoryPalace', avatar: '/static/images/people/1.webp' },
-            tags: ['Memory', 'Romance'],
-            stats: { comments: 380, likes: 1650, timeAgo: '4d ago' },
-            poster: '/static/images/4.jpg',
-        }
-    ];
+    useEffect(() => {
+        fetch('/api/posts')
+            .then((res) => res.json())
+            .then((data: PostsResponse) => {
+                const list = Array.isArray(data) ? data : data?.posts ?? [];
+                setPosts(list);
+            })
+            .catch(() => setPosts([]))
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleLike = (postId: number) => {
+        fetch('/api/likes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetType: 'post', targetId: postId }),
+        })
+            .then(async (res) => {
+                if (res.status === 401) {
+                    const returnUrl = encodeURIComponent(
+                        typeof window !== 'undefined' ? window.location.pathname : '/movies'
+                    );
+                    window.location.href = `/api/auth/signin?callbackUrl=${returnUrl}`;
+                    return null;
+                }
+                if (!res.ok) return null;
+                const data = (await res.json()) as { liked?: boolean; count?: number };
+                return data;
+            })
+            .then((data) => {
+                if (!data || typeof data.liked !== 'boolean') return;
+                const count = data.count;
+                setPosts((prev) =>
+                    prev.map((p) =>
+                        p.id === postId ? { ...p, likeCount: count ?? p.likeCount } : p
+                    )
+                );
+                setLikedPostIds((prev) => {
+                    const next = new Set(prev);
+                    if (data.liked) next.add(postId);
+                    else next.delete(postId);
+                    return next;
+                });
+            });
+    };
 
     return (
         <div className="w-full h-screen overflow-hidden bg-background text-foreground flex flex-col">
@@ -151,7 +135,7 @@ export default function MoviesPage() {
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-20">
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 {/* Left Column: Discussion Feed */}
-                                <div className="lg:col-span-2 space-y-6">
+                                <div className="lg:col-span-2 space-y-6 min-w-0">
                                     <div className="flex items-center justify-between mb-4">
                                         <h2 className="text-xl font-bold text-foreground">Feeds</h2>
                                         <div className="flex gap-1 bg-white/5 p-1 rounded-lg">
@@ -161,9 +145,25 @@ export default function MoviesPage() {
                                         </div>
                                     </div>
 
-                                    {posts.map((post, index) => (
-                                        <DiscussionCard key={index} {...post} />
-                                    ))}
+                                    {loading ? (
+                                        <div className="space-y-6">
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <DiscussionCardSkeleton key={i} />
+                                            ))}
+                                        </div>
+                                    ) : posts.length === 0 ? (
+                                        <p className="text-muted-foreground">No posts yet. Create one to get started.</p>
+                                    ) : (
+                                        posts.map((post) => (
+                                            <DiscussionCard
+                                                key={post.id}
+                                                {...mapPostToCard(post, {
+                                                    liked: likedPostIds.has(post.id),
+                                                    onLike: () => handleLike(post.id),
+                                                })}
+                                            />
+                                        ))
+                                    )}
                                 </div>
 
                                 {/* Right Column: Trending Side Rail */}

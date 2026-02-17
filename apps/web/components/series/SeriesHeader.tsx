@@ -15,7 +15,7 @@ export function SeriesHeader({ series }: SeriesHeaderProps) {
         <div className="absolute inset-0">
           <Image
             src={series.backdropUrl}
-            alt={series.title}
+            alt={series.title ? `${series.title} backdrop` : 'Series backdrop'}
             fill
             className="object-cover"
             priority
@@ -31,7 +31,7 @@ export function SeriesHeader({ series }: SeriesHeaderProps) {
           <div className="hidden md:block flex-shrink-0">
             <Image
               src={series.posterUrl || '/static/images/1.jpg'}
-              alt={series.title}
+              alt={series.title || 'Series poster'}
               width={200}
               height={300}
               className="rounded-lg shadow-2xl"

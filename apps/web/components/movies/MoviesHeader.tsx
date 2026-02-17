@@ -1,7 +1,8 @@
 'use client';
 
-import { SearchIcon, BellIcon, MenuIcon } from 'lucide-react';
+import { SearchIcon, BellIcon, MenuIcon, PenSquare } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface MoviesHeaderProps {
     onMenuClick: () => void;
@@ -40,8 +41,15 @@ export function MoviesHeader({ onMenuClick }: MoviesHeaderProps) {
                     </div>
                 </div>
 
-                {/* Right: Notifications + User */}
+                {/* Right: Create Post + Notifications + User */}
                 <div className="flex items-center gap-4">
+                    <Link
+                        href="/post/create"
+                        className="flex items-center gap-2 px-3 py-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white text-sm font-medium"
+                    >
+                        <PenSquare className="w-5 h-5" />
+                        <span className="hidden sm:inline">Create Post</span>
+                    </Link>
                     {/* Notifications */}
                     <button className="relative p-2 hover:bg-white/10 rounded-full transition-colors group">
                         <BellIcon className="w-6 h-6 text-gray-300 group-hover:text-white transition-colors" />
