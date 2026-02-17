@@ -6,6 +6,7 @@ import { Metadata } from 'next';
 import '@/css/globals.css';
 import { SearchProvider } from '@/components/shared/SearchProvider';
 import { AnalyticsWrapper } from '@/components/shared/Analytics';
+import { OnboardingGuard } from '@/components/shared/OnboardingGuard';
 
 const displayFont = Nunito_Sans({
   subsets: ['latin'],
@@ -115,9 +116,11 @@ export default function RootLayout({
 
           <div className="w-full flex flex-col justify-between items-center font-sans">
             <SearchProvider>
-              <main className="w-full flex flex-col items-center mb-auto">
-                {children}
-              </main>
+              <OnboardingGuard>
+                <main className="w-full flex flex-col items-center mb-auto">
+                  {children}
+                </main>
+              </OnboardingGuard>
             </SearchProvider>
           </div>
         </ThemeProviders>

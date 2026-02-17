@@ -7,7 +7,7 @@ const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' *.vercel-analytics.com *.vercel-scripts.com *.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline';
-  img-src *.supabase.co * blob: data:;
+  img-src *.supabase.co *.dicebear.com * blob: data:;
   media-src *.s3.amazonaws.com *.shipixen.com;
   connect-src *;
   font-src 'self';
@@ -87,6 +87,12 @@ module.exports = () => {
           hostname: 'shipixen.com',
           port: '',
           pathname: '**/*',
+        },
+        {
+          protocol: 'https',
+          hostname: 'api.dicebear.com',
+          port: '',
+          pathname: '/**',
         },
       ],
     },
