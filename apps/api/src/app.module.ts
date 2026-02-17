@@ -8,6 +8,9 @@ import { TmdbModule } from './tmdb/tmdb.module';
 import { LlmModule } from './llm/llm.module';
 import { RecapModule } from './recap/recap.module';
 import { CacheModule } from './cache/cache.module';
+import { PostsModule } from './posts/posts.module';
+import { CommentsModule } from './comments/comments.module';
+import { LikesModule } from './likes/likes.module';
 
 @Module({
   imports: [
@@ -43,6 +46,9 @@ import { CacheModule } from './cache/cache.module';
     LlmModule,
     CacheModule,
     RecapModule,
+    PostsModule,
+    CommentsModule,
+    LikesModule,
   ],
 })
 export class AppModule {}
